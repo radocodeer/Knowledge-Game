@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Player</title>
+        <link rel="stylesheet" href="styleAdmin.css">
+    </head>
+<body>
+    <h1>Game Status</h1>
+    <div id="questionContainer"></div>
+    <div id="playersContainer"></div>
+    <div id="winner"></div>
+    <button id="resetButton">Reset Game</button>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        // Listen for game state updates from the server
+        socket.on('updateAdmin', (data) => {
+            console.log("data " + data.gameOver);
+            const questionContainer = document.getElementById('questionContainer');
+            const playersContainer = document.getElementById('playersContainer');
+            const winnerContainer = document.getElementById('winner');
+            
+            // Display the current question and options
+            if (data.question) {
+                questionContainer.innerHTML = `<h2>Question: ${data.question.text}</h2>`;
+                for (const [key, option] of Object.entries(data.question.options)) {
+                    questionContainer.innerHTML += `<p>${key}: ${option}</p>`;
+                }
+            } else {
+                questionContainer.innerHTML = "<h2>No question available</h2>";
+            }
+
+            // Display players' names and scores
+            playersContainer.innerHTML = '<h3>Players and Scores:</h3>';
+            for (const playerId in data.players) {
+                const player = data.players[playerId];
+                playersContainer.innerHTML += `<p>${player.name}: ${player.score} points</p>`;
+            }
+
+            // Check if the game is over and display the winner
+            if (data.gameOver) {
+                console.log("gameOver");
+                winnerContainer.innerHTML = `<h3>Winner: ${data.gameOver.winner}</h3><p>Score: ${data.gameOver.maxScore}</p>`;
+            } else {
+                winnerContainer.innerHTML = '';  // Clear the winner section if the game is not over
+            }
+        });
+
+        // Reset the game when the button is clicked
+        document.getElementById('resetButton').onclick = () => {
+            socket.emit('resetGame');
+        };
+    </script>
+</body>
+</html>
